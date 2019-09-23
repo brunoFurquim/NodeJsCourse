@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Add Users</title>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/users/list">User list</a></li>
+                <li><a href="/users/add-user">Add users</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <form action="/users/add-user" method="POST">
+            <input type="text" name="Name" placeholder="Name" />
+            <input type="text" name="Email" placeholder="E-mail" />
+
+            <button type="submit">Add User</button>
+        </form>
+    </main>
+</body>
+
+</html>
