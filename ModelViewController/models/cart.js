@@ -1,71 +1,74 @@
 const fs = require('fs');
 const path = require('path');
-const fullPath = require('../util/path')
 
-const p = path.join(fullPath, 'data', 'cart.json')
+const p = path.join(
+  path.dirname(process.mainModule.filename),
+  'data',
+  'cart.json'
+);
 
 module.exports = class Cart {
-    static getCartFromFile(cb) {
-        fs.readFile(p, (error, fileContent) => {
-            let cart = { products: [], totalPrice: 0 };
-            if (!error) cart = JSON.parse(fileContent);
-            cb(cart);
-        })
-    }
-    static addProduct(id, price) {
-        this.getCartFromFile((cart) => {
-            console.log(cart)
-            const product = cart.products.find(product => product.id === id);
-            let updatedProduct;
-            if (product) {
-                updatedProduct = { ...product };
-                updatedProduct.quantity++;
+  static addProduct(id, productPrice) {
+    // Fetch the previous cart
+    fs.readFile(p, (err, fileContent) => {
+      let cart = { products: [], totalPrice: 0 };
+      if (!err) {
+        cart = JSON.parse(fileContent);
+      }
+      // Analyze the cart => Find existing product
+      const existingProductIndex = cart.products.findIndex(
+        prod => prod.id === id
+      );
+      const existingProduct = cart.products[existingProductIndex];
+      let updatedProduct;
+      // Add new product/ increase quantity
+      if (existingProduct) {
+        updatedProduct = { ...existingProduct };
+        updatedProduct.qty = updatedProduct.qty + 1;
+        cart.products = [...cart.products];
+        cart.products[existingProductIndex] = updatedProduct;
+      } else {
+        updatedProduct = { id: id, qty: 1 };
+        cart.products = [...cart.products, updatedProduct];
+      }
+      cart.totalPrice = cart.totalPrice + +productPrice;
+      fs.writeFile(p, JSON.stringify(cart), err => {
+        console.log(err);
+      });
+    });
+  }
 
-                //finds old product's index
-                let index = cart.products.findIndex(prod => prod.id === id);
+  static deleteProduct(id, productPrice) {
+    fs.readFile(p, (err, fileContent) => {
+      if (err) {
+        return;
+      }
+      const updatedCart = { ...JSON.parse(fileContent) };
+      const product = updatedCart.products.find(prod => prod.id === id);
+      if (!product) {
+          return;
+      }
+      const productQty = product.qty;
+      updatedCart.products = updatedCart.products.filter(
+        prod => prod.id !== id
+      );
+      updatedCart.totalPrice =
+        updatedCart.totalPrice - productPrice * productQty;
 
-                //updates the array with the updated product
-                cart.products[index] = updatedProduct;
-            } else {
-                updatedProduct = {
-                    id,
-                    quantity: 1
-                }
-                cart.products = [...cart.products, updatedProduct]
-            }
-            cart.totalPrice += +price;
+      fs.writeFile(p, JSON.stringify(updatedCart), err => {
+        console.log(err);
+      });
+    });
+  }
 
-            fs.writeFile(p, JSON.stringify(cart), (error) => {
-                console.log(error)
-            })
-        })
-    }
-
-    static getProducts(cb) {
-        this.getCartFromFile((cart) => {
-            cb(cart.products);
-        })
-    }
-
-    static deleteProduct(id, price) {
-        console.log(id, price)
-        this.getCartFromFile(cart => {
-            let product = cart.products.find(product => product.id === id);
-            if (!product) return; 
-
-            let products = cart.products.filter(product => product.id !== id);
-            let totalPrice = cart.totalPrice;
-
-            totalPrice -= (product.quantity * price);
-
-            cart = {
-                products, 
-                totalPrice
-            }
-
-            fs.writeFile(p, JSON.stringify(cart), error => {
-                console.log(error)
-            })
-        })
-    }
-}
+  static getCart(cb) {
+    fs.readFile(p, (err, fileContent) => {
+      const cart = JSON.parse(fileContent);
+      if (err) {
+        cb(null);
+      } else {
+        cb(cart);
+      }
+    });
+  }
+};
